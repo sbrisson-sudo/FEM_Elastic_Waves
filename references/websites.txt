@@ -1,0 +1,3 @@
+https://github.com/ZibraMax/FEM.git
+
+https://www.files.ethz.ch/structuralgeology/SMS/NumModRocDef/
