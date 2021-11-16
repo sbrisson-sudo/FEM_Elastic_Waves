@@ -69,7 +69,10 @@ if abspath(PROGRAM_FILE) == @__FILE__
     nodes, elements = readGmsh("../gmsh_meshes/octogon.msh")
     println(length(nodes), " nodes")
     println(length(elements), " elements")
-
     plotMesh(nodes, elements)
 
 end
+nodes, elements = readGmsh("./gmsh_meshes/octogon.msh")
+println(length(nodes), " nodes")
+println(length(elements), " elements")
+plotMesh(nodes, elements)
