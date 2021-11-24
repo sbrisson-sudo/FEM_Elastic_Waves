@@ -56,14 +56,29 @@ class Interpolators:
 # QUADRATURE
 
 def getGLLquad(N, dir="../quadratureRules/"):
+    """ Gauss Lebato Legendre quadrature rule
+    """
     data = np.loadtxt(f"{dir}/gll_{N:02d}.tab")
     return data[0,:], data[1,:], data[2:,:] 
 
-def getGLquad(N, dir="../quadratureRules/"):
+def getGLquad(N, dir="../quadratureRules/", twoD=True):
+    """ Gauss Legendre quadrature rule
+    xi_i, w_i = getGlquad(N) """
     data = np.loadtxt(f"{dir}/gl_{N:02d}.tab")
-    return data[:,0], data[:,1] 
+    w_i, xi_i = data[:,0], data[:,1] 
+    if twoD:
+        w_ij = np.array([[wi[i]*wi[j] for i in range(N)] for j in range(N)])
+        xi_ij = np.array([[xi[i] for i in range(N)] for j in range(N)])
+        linearize = lambda x : x.reshape(x.shape[0]*x.shape[1])
+        return linearize(xi_ij), linearize(w_ij)
+    else:
+        return xi_i, w_i
 
 
+def quadrature2D(f, xi_ij, w_ij):
+    """Compute the 2D integral of f(u,v) over [-1,1]x[-1,1]"""
+    return sum([w_ij[i] * f(xi_ij[i], xi_ij.T[i]) for i in range(len(xi_ij))])
+    
 
 # CLASSES ELEMENTS (P1)
 
@@ -96,8 +111,15 @@ class Elements:
         dydv = lambda u,v : sum([self.itp.dvphi(u,v)*x for phi,x in zip(self.phi, Y)])
         self.detJ = lambda u,v : dxdu(u,v)*dydv(u,v) - dxdv(u,v)*dydu(u,v)
 
-    def quadratureSetup(self, ui, wi):
-        return
+    def computeQuadrature(self, f, xi_ij, w_ij):
+        """Compute quadrature of f(x,y) over the element"""
+        xinterp = self.itp.interp(self.nodesCoord[:,0])
+        yinterp = self.itp.interp(self.nodesCoord[:,1])
+        return quadrature2D(
+            lambda u,v : f(xinterp(u,v), yinterp(u,v)) * self.detJ(u,v),
+            xi_ij, w_ij
+        )
+
 
     def __repr__(self):
         out = f"Element {self.id}:\n"
