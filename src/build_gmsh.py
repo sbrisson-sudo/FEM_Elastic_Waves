@@ -62,7 +62,7 @@ gmsh.fltk.run()
 
 ### To save the mesh
 gmsh.option.setNumber("Mesh.SaveAll", 1)
-gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
+#gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
 gmsh.write("../meshes/t1_quad.msh")
 
 gmsh.finalize()
