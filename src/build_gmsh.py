@@ -1,19 +1,30 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.model.add("t1")
+gmsh.model.add("t2")
 
 ### To modify global mesh size
 
-gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.1)
+gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.08)
+#gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 2)
+
+### To modify colors
+gmsh.option.setColor("Geometry.Points", 255, 0, 0)
+gmsh.option.setColor("Mesh.Points", 255, 127, 0)
+
 
 ### To build the figure
 geo = gmsh.model.geo
 
 #Building
-h = [0, 0.2, 3, 3.2, 6, 6.2, 9, 9.2, 12, 12.2, 15, 15.2] #height
+#h = [0, 0.2, 3, 3.2, 6, 6.2, 9, 9.2, 12, 12.2, 15, 15.2] #height
+#n = len(h)
+#w = [0, 0.2, 6, 6.2, 10, 10.2, 12, 12.2, 16, 16.2, 22, 22.2] #width
+#m = len(w)
+
+h = [0, 0.2, 3, 3.2, 6, 6.2, 9, 9.2] #height
 n = len(h)
-w = [0, 0.2, 6, 6.2, 10, 10.2, 12, 12.2, 16, 16.2, 22, 22.2] #width
+w = [0, 0.2, 6, 6.2, 10, 10.2] #width
 m = len(w)
 
 #Points-Lines-Surface for exterior
@@ -56,6 +67,10 @@ gmsh.model.mesh.generate(2)
 
 ### To recombine
 gmsh.model.mesh.recombine()
+#gmsh.model.mesh.optimize("HighOrderElastic")
+
+### To set boundaries
+gmsh.model.addPhysicalGroup(1, [1], 1)
 
 ### To visualize the mesh
 gmsh.fltk.run()
@@ -63,6 +78,6 @@ gmsh.fltk.run()
 ### To save the mesh
 gmsh.option.setNumber("Mesh.SaveAll", 1)
 #gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
-gmsh.write("../meshes/t1_quad.msh")
+gmsh.write("../FEM_Elastic_Waves/meshes/t2.msh")
 
 gmsh.finalize()
