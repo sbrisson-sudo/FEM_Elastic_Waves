@@ -5,7 +5,7 @@ gmsh.model.add("t1")
 
 ### To modify global mesh size
 
-gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.02)
+gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.1)
 
 ### To build the figure
 geo = gmsh.model.geo
@@ -54,11 +54,15 @@ gmsh.model.geo.synchronize()
 ### To generate the mesh
 gmsh.model.mesh.generate(2)
 
+### To recombine
+gmsh.model.mesh.recombine()
+
 ### To visualize the mesh
 gmsh.fltk.run()
 
 ### To save the mesh
 gmsh.option.setNumber("Mesh.SaveAll", 1)
-gmsh.write("t1.msh")
+#gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
+gmsh.write("../meshes/t1_quad.msh")
 
 gmsh.finalize()

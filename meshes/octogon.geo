@@ -30,13 +30,16 @@ Plane Surface(111) = {21};
 Recombine Surface {111};    // for quadrangles
 
 // physical curves
-Physical Curve("outside",21) = {21};
+Physical Curve("bottom",21) = {11};
+Physical Curve("rigth",22) = {12,13,14};
+Physical Curve("top",23) = {15};
+Physical Curve("left",24) = {16,17,18};
 
 // physical surfaces
 Physical Surface("main",211) = {111};
 
 // MESHING
 // Mesh.MeshSizeFactor=0.1; // densify the mesh
-// Mesh.MshFileVersion = 2.2;
-// Mesh 2;                  // mesh in 2D
-// Save "octogon.msh";      // save file
+// Mesh.MshFileVersion = 4;
+Mesh 2;                  // mesh in 2D
+Save "octogon4.msh";      // save file

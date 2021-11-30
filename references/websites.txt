@@ -8,3 +8,4 @@ http://solidmechanics.org/text/Chapter7_1/Chapter7_1.htm
 
 Theory and Implementation of the Finite Element Method -> top
 http://solidmechanics.org/text/Chapter8_1/Chapter8_1.htm
+
