@@ -6,7 +6,7 @@ import gmsh
 # definition d'un objet element
 
 class Node:
-    id = 1
+    id = 0
     def __init__(self, x, y, region):
         self.id = Node.id
         Node.id += 1
@@ -84,12 +84,14 @@ def readGmsh4(file, regions = []):
 
     gmsh.finalize()
     
+    print(elements)
+    
     return elements, nodes
 
 
 if __name__ == "__main__":
     
-    file = "../meshes/octogon4.msh"
+    file = "../meshes/octogon.msh"
     
     regions = [
         (1, 21),
