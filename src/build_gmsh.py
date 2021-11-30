@@ -38,6 +38,9 @@ geo.addLine(4, 3, 4)
 geo.addLine(3, 1, 3)
 geo.addCurveLoop([1, 2, 4, 3], 1)
 
+# To set boundaries
+gmsh.model.addPhysicalGroup(1, [1], 1)
+
 #Points for holes
 for i in range(n-2):
     for j in range(m-2):
@@ -45,6 +48,7 @@ for i in range(n-2):
 
 #Lines-Surface for holes
 l = [1]
+l_completed = [2,3,4]
 for i in range(n//2 - 1): #nb of holes in height dim
     for j in range(m//2 -1): #nb of holes in width dim
         a = 5 +2*j +2*(m-2)*i
@@ -57,6 +61,10 @@ for i in range(n//2 - 1): #nb of holes in height dim
         geo.addLine(d, a, d)
         geo.addCurveLoop([a, b, c, d], a)
         l.append(a)
+        l_completed.extend([a, b, c, d])
+
+# To set boundaries
+gmsh.model.addPhysicalGroup(1, l_completed, 2)
 
 #Complete the build
 geo.addPlaneSurface(l, 1)
@@ -68,9 +76,6 @@ gmsh.model.mesh.generate(2)
 ### To recombine
 gmsh.model.mesh.recombine()
 #gmsh.model.mesh.optimize("HighOrderElastic")
-
-### To set boundaries
-gmsh.model.addPhysicalGroup(1, [1], 1)
 
 ### To visualize the mesh
 gmsh.fltk.run()
