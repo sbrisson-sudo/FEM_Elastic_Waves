@@ -9,3 +9,6 @@ http://solidmechanics.org/text/Chapter7_1/Chapter7_1.htm
 Theory and Implementation of the Finite Element Method -> top
 http://solidmechanics.org/text/Chapter8_1/Chapter8_1.htm
 
+formulation faible Lamé Clapeyron
+https://math.stackexchange.com/questions/2270242/deriving-the-weak-form-for-linear-elasticity-equation
+https://elearn.univ-tlemcen.dz/pluginfile.php/124795/mod_resource/content/1/Elasticite%CC%81_Chap5_2019_2020.pdf#:~:text=Les%20%C3%A9quations%20de%20Lam%C3%A9%20Clapeyron,de%20compatibilit%C3%A9%20et%20de%20Hooke.
