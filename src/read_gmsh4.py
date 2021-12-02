@@ -18,7 +18,7 @@ class Node:
         return f"Node {self.id} [{self.x},{self.y}], region = {self.region}\n"
 
 class Element:
-    id = 1
+    id = 0
     def __init__(self, nodes):
         self.nodes = nodes
         self.id = Element.id
@@ -30,23 +30,34 @@ class Element:
     def __repr__(self):
         return f"Element {self.id}\nNodes : {[n.id for n in self.nodes]}\nCoords : {self.getCoords()}\n"
 
-def plotMesh(elements, nodes, regions = []):
+def plotMesh(elements, nodes, regions = [], allNodes=False):
+    """
+    plotMesh(elements, nodes, regions=[])
+    """
     
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10,10))
     
-    regionsSymbols = ["+b", "+g", "+r", "+y"]
+    regionsSymbols = ["+b", "+g", "+r", "+m"]
     
     for e in elements:
         coords = e.getCoords()
         plt.fill(coords[:,0], coords[:,1], color="greenyellow", alpha=0.5, ec="k")
-        
-    for (i,r) in enumerate(regions):
+    
+    if allNodes:
         for n in nodes:
-            if n.region == r: plt.plot(n.x, n.y, regionsSymbols[i])
-            
+            plt.plot(n.x, n.y, "k+")
+    
+    for (i,r) in enumerate(regions):
+        first = True
+        for n in nodes:
+            if n.region == r: 
+                plt.plot(n.x, n.y, regionsSymbols[i%4],
+                         label = r if first else "")
+                first = False
+    
+    ax.legend()
     ax.set_aspect("equal", "box")
     plt.show()
-
 
 def readGmsh4(file, regions = []):
     """ Read a gmsh mesh file version 4, regions : list of tuples (dim, tag) of physical groups to identify """
@@ -59,17 +70,17 @@ def readGmsh4(file, regions = []):
     nodeTags, nodeCoords,_ = gmsh.model.mesh.getNodes()
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
     
-    nodes = [Node(x, y, 1) for x,y,_ in nodeCoords]
+    nodes = [Node(x, y, 0) for x,y,_ in nodeCoords]
     nodesList = dict(zip(nodeTags, nodes))
     
     # Lecture des regions
     
-    for i, (dim, tag) in enumerate(regions):
-        nodeTagsRegion, _ = gmsh.model.mesh.getNodesForPhysicalGroup(dim, tag)
-        for tag in nodeTagsRegion:
-            nodesList[tag].region = i+2
+    for dim_region, tag_region in regions:
+        nodes_in_region, _ = gmsh.model.mesh.getNodesForPhysicalGroup(dim_region, tag_region)
+        for n_id in nodes_in_region:
+            nodesList[n_id].region = tag_region
     
-    nodes = nodesList.values()
+    nodes = list(nodesList.values())
     
     # Lecture des éléments
     
@@ -83,9 +94,7 @@ def readGmsh4(file, regions = []):
                 elements.append(Element([nodesList[n] for n in nodestags[i][4*j:4*(j+1)]]))
 
     gmsh.finalize()
-    
-    print(elements)
-    
+            
     return elements, nodes
 
 
@@ -101,8 +110,4 @@ if __name__ == "__main__":
         ]
     
     elements, nodes = readGmsh4(file, regions)    
-    plotMesh(elements, nodes, [2,3,4,5])
-    
-
-    
-    
+    plotMesh(elements, nodes, [21,22,23,24])
