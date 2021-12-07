@@ -1,11 +1,11 @@
 import gmsh
 
 gmsh.initialize()
-gmsh.model.add("t2")
+gmsh.model.add("t3")
 
 ### To modify global mesh size
 
-gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.08)
+gmsh.option.setNumber("Mesh.MeshSizeFactor", 0.18)
 #gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 2)
 
 ### To modify colors
@@ -22,9 +22,14 @@ geo = gmsh.model.geo
 #w = [0, 0.2, 6, 6.2, 10, 10.2, 12, 12.2, 16, 16.2, 22, 22.2] #width
 #m = len(w)
 
-h = [0, 0.2, 3, 3.2, 6, 6.2, 9, 9.2] #height
+#h = [0, 0.2, 3, 3.2, 6, 6.2, 9, 9.2] #height
+#n = len(h)
+#w = [0, 0.2, 6, 6.2, 10, 10.2] #width
+#m = len(w)
+
+h = [0, 0.2, 3, 3.2, 6, 6.2] #height
 n = len(h)
-w = [0, 0.2, 6, 6.2, 10, 10.2] #width
+w = [0, 0.2, 6, 6.2] #width
 m = len(w)
 
 #Points-Lines-Surface for exterior
@@ -83,6 +88,6 @@ gmsh.fltk.run()
 ### To save the mesh
 gmsh.option.setNumber("Mesh.SaveAll", 1)
 #gmsh.option.setNumber("Mesh.MshFileVersion", 2.2)
-gmsh.write("../FEM_Elastic_Waves/meshes/t2.msh")
+gmsh.write("../FEM_Elastic_Waves/meshes/t3.msh")
 
 gmsh.finalize()
