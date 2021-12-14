@@ -12,6 +12,12 @@
   - `Plane Surface(tag) = {curve_loop_tags};`
   - `Physical Surface("name", tag) = {surfaces_list};`
 
+## Element types
+**quadrangles**
+- 3 : N = 1
+- 10 : N = 2
+- 37 : N = 4
+- 38 : N = 5
 
 ## FORMAT
 

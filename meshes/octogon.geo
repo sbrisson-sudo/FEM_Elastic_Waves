@@ -28,6 +28,8 @@ Curve Loop(21) = {11,12,13,14,15,16,17,18};
 // surfaces definition
 Plane Surface(111) = {21};
 Recombine Surface {111};    // for quadrangles
+Mesh.ElementOrder = 4;
+
 
 // physical curves
 Physical Curve("bottom",21) = {11};
@@ -43,3 +45,5 @@ Physical Surface("main",211) = {111};
 // Mesh.MshFileVersion = 4;
 Mesh 2;                  // mesh in 2D
 Save "octogon4.msh";      // save file
+
+
