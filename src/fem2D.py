@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from copy import deepcopy
+import os
 
 import gmsh
 
@@ -39,6 +40,9 @@ class Element:
     def __repr__(self):
         return f"Element {self.id}\nNodes : {[n.id for n in self.nodes]}\nCoords : {self.getCoords()}\n"
 
+def eraseCurrentMesh():
+    Element.id = 0
+    Node.id = 0
 
 #-----------------------------
 # SHAPE FUNCTIONS
@@ -94,24 +98,24 @@ def plotMesh(elements, nodes, regions = [], allNodes=False):
     """
     plotMesh(elements, nodes, regions=[])
     """
-    
-    fig, ax = plt.subplots()
+        
+    fig, ax = plt.subplots(figsize = (10,10))
     
     regionsSymbols = ["+b", "+g", "+r", "+m"]
     
     for e in elements:
         coords = e.getCoords()
-        plt.fill(coords[:,0], coords[:,1], color="greenyellow", alpha=0.5, ec="k")
+        ax.fill(coords[:,0], coords[:,1], color="greenyellow", alpha=0.5, ec="k")
     
     if allNodes:
         for n in nodes:
-            plt.plot(n.x, n.y, "k+")
+            ax.plot(n.x, n.y, "k+")
     
     for (i,r) in enumerate(regions):
         first = True
         for n in nodes:
             if n.region == r: 
-                plt.plot(n.x, n.y, regionsSymbols[i%4],
+                ax.plot(n.x, n.y, regionsSymbols[i%4],
                          label = r if first else "")
                 first = False
     
@@ -133,12 +137,13 @@ def plotNodes(e):
 def readGmsh4(file, regions = []):
     """ Read a gmsh mesh file version 4, regions : list of tuples (dim, tag) of physical groups to identify """
     
+    if not(os.path.exists(file)): raise Exception(f"mesh file {file} not found.")
+    
     gmsh.initialize()
     gmsh.open(file)
     
     # Lecture des noeuds
     
-        
     nodeTags, nodeCoords,_ = gmsh.model.mesh.getNodes()
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
     
@@ -148,7 +153,9 @@ def readGmsh4(file, regions = []):
     # Lecture des regions
     
     for dim_region, tag_region in regions:
+        
         nodes_in_region, _ = gmsh.model.mesh.getNodesForPhysicalGroup(dim_region, tag_region)
+        
         for n_id in nodes_in_region:
             nodesList[n_id].region = tag_region
     
@@ -178,6 +185,13 @@ def readGmsh4(file, regions = []):
                 elements.append(Element([nodesList[n] for n in nodestags[i][nnodes*j:nnodes*(j+1)][reOrder[order]]], order))
 
     gmsh.finalize()
+    
+    # Moving inner points to GL points
+    
+    N = int(np.sqrt(len(elements[0].nodes))) - 1
+        
+    if N > 1:
+        transform2GL(nodes, elements)
                 
     return elements, nodes
 
@@ -206,8 +220,7 @@ if __name__ == "__main__":
     
     #---------------------
     
-    # file = "../meshes/octogon2.msh"
-    
+    #file = "../meshes/octogon4.msh"
     # regions = [
     #     (1, 21),
     #     (1, 23),
@@ -215,26 +228,27 @@ if __name__ == "__main__":
     #     (1, 24),
     #     ]
     
-    # elements, nodes = readGmsh4(file, regions)    
+    file = "../meshes/square4.msh"
+    regions = [
+        (1, 31),
+        (1, 33),
+        (1, 32),
+        (1, 34),
+        ]
+    
+    elements, nodes = readGmsh4(file, regions)    
     
     #---------------------
     
-    nodes = [   
-        Node(0.0, 0.0, 1),
-        Node(1.0, 0.0, 1),
-        Node(0.0, 1.0, 1),
-        Node(1.0, 1.0, 1),
-    ]
+    # nodes = [   
+    #     Node(0.0, 0.0, 1),
+    #     Node(1.0, 0.0, 1),
+    #     Node(0.0, 1.0, 1),
+    #     Node(1.0, 1.0, 1),
+    # ]
     
-    elements = [Element(nodes)]
+    # elements = [Element(nodes)]
 
     #---------------------
-    
-    N = int(np.sqrt(len(elements[0].nodes))) - 1
-    
-    print(f"N = {N}")
-    
-    if N > 1:
-        transform2GL(nodes, elements)
-    
-    plotMesh(elements, nodes, [21,22,23,24], allNodes=True)
+ 
+    plotMesh(elements, nodes, [r[1] for r in regions], allNodes=True)
