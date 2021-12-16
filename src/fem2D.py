@@ -174,6 +174,7 @@ def readGmsh4(file, regions = []):
     if not(os.path.exists(file)): raise Exception(f"mesh file {file} not found.")
     
     gmsh.initialize()
+    gmsh.option.setNumber("General.Verbosity", 0)
     gmsh.open(file)
     
     # Lecture des noeuds
@@ -199,7 +200,7 @@ def readGmsh4(file, regions = []):
     
     elements = []
     elemtypes, elemtags, nodestags = gmsh.model.mesh.getElements()
-    
+        
     elmtType2order = {3:1, 10:2, 37:4}
     
     reOrder = {
@@ -220,10 +221,11 @@ def readGmsh4(file, regions = []):
 
     gmsh.finalize()
     
+    if not(elements): raise(Exception("No quadrangles of degree 1,2 or 4 found."))
+    
     # Moving inner points to GL points
     
     N = int(np.sqrt(len(elements[0].nodes))) - 1
-        
     if N > 1:
         transform2GL(nodes, elements)
                 
