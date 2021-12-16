@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from copy import deepcopy
+from functools import reduce
+from scipy.spatial import ConvexHull
+import scipy.interpolate as itp 
+from matplotlib.path import Path
+
 import os
 
 import gmsh
@@ -74,6 +79,24 @@ shapeFunctions = {
 def interp(phi, X):
     return lambda u,v : sum([f(u,v)*x for f,x in zip(phi, X)])
 
+# lagrangian interpolants
+def lagrangian2D(N):
+    
+    xi_l = list(readGLL(N)[0])
+
+    # passage des paramètres par arguments nécessaire
+    h = [
+        lambda x,xi1=xi1b,i=ib : reduce(lambda a,b:a*b, [(lambda xi2=xi2b : (x-xi2)/(xi1-xi2))(xi2b) for xi2b in xi_l[:i]+xi_l[i+1:]])
+        for (ib,xi1b) in enumerate(xi_l)
+    ]
+    hij = []
+
+    for hib in h:
+        for hjb in h:
+            hij.append(lambda u,v,hi=hib,hj=hjb : hi(v)*hj(u))
+            
+    return hij
+        
 #-----------------------------
 # LECTURE REGLES DE QUADRATURE
 
@@ -99,7 +122,7 @@ def plotMesh(elements, nodes, regions = [], allNodes=False):
     plotMesh(elements, nodes, regions=[])
     """
         
-    fig, ax = plt.subplots(figsize = (10,10))
+    fig, ax = plt.subplots(figsize = (6,6))
     
     regionsSymbols = ["+b", "+g", "+r", "+m"]
     
@@ -129,6 +152,17 @@ def plotNodes(e):
         plt.annotate(str(i), (n.x, n.y))
     plt.gca().set_aspect("equal", "box")
     plt.show()
+    
+def plotNodesValues(U, nodes, ax):
+    dots = ax.scatter([n.x for n in nodes], [n.y for n in nodes], c=U, zorder=5)
+    plt.colorbar(dots)
+    ax.set_aspect("equal", "box")
+    
+def plotMeshLimits(elements, ax):
+    for e in elements:
+        coords = e.getCoords()
+        ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="k", zorder=1)
+
 
 #-----------------------------
 # LECTURE MAILLAGES GMSH
@@ -170,7 +204,7 @@ def readGmsh4(file, regions = []):
     
     reOrder = {
         1 : np.array([0,1,3,2]),
-        2 : np.array([0, 5, 1, 7, 8, 5, 3, 6, 2]),
+        2 : np.array([0, 4, 1, 7, 8, 5, 3, 6, 2]),
         4 : np.array([0, 4, 5, 6, 1, 15, 16, 17, 18, 7, 14, 23, 24, 19, 8, 13, 22, 21, 20, 9, 3, 12, 11, 10, 2])
     }
 
@@ -214,7 +248,79 @@ def transform2GL(nodes, elements):
             j = k - i*(N+1)
             n.x = X(xi[j], xi[i])
             n.y = Y(xi[j], xi[i])
+            
+#-------------------------
+# Post-Processing
 
+def outputGrid(N,nodes):
+    """Return a regular spaced grid and a mask on the mesh"""
+    nodesCoord = np.array([[n.x,n.y] for n in nodes])
+
+    xmin,xmax = nodesCoord[:,0].min(),nodesCoord[:,0].max()
+    ymin,ymax = nodesCoord[:,1].min(),nodesCoord[:,1].max()
+
+    NptsGrid = 200
+
+    gridx = np.linspace(xmin,xmax,NptsGrid)
+    gridy = np.linspace(ymin,ymax,NptsGrid)
+
+    maskMesh = np.full((NptsGrid,NptsGrid), True)
+
+    gridxx, gridyy = np.meshgrid(gridx,gridy)
+    
+    hull = ConvexHull(nodesCoord)
+    hull_path = Path(nodesCoord[hull.vertices])
+
+    for i in range(NptsGrid):
+        for j in range(NptsGrid):
+            if hull_path.contains_point((gridxx[i,j],gridyy[i,j])): maskMesh[i,j] = False
+    
+    return gridx,gridy,maskMesh
+
+def interpOnGrid(U,elements,gridx,gridy,maskMesh):
+    """interpolate the value of the field U over the grid"""
+    
+    Npts = 50
+
+    u = np.linspace(-1, 1, Npts)
+    uu, vv = np.meshgrid(u,u)
+
+    vmin, vmax = U.min(), U.max()
+
+    X,Y,Z = np.zeros(Npts**2*len(elements)),np.zeros(Npts**2*len(elements)),np.zeros(Npts**2*len(elements))
+
+    # interpolants
+    phi = shapeFunctions["P1"]["phi"]
+    N = int(np.sqrt(len(elements[0].nodes))) - 1
+    hij = lagrangian2D(N)
+    
+    for i,e in enumerate(elements):
+        
+        coords = e.getCoords()
+        
+        zitp = interp(hij, [U[n.id] for n in e.nodes])
+        xitp = interp(phi, coords[:,0])
+        yitp = interp(phi, coords[:,1])
+        
+        X[i*Npts**2:(i+1)*Npts**2] = xitp(uu, vv).reshape(Npts**2)
+        Y[i*Npts**2:(i+1)*Npts**2] = yitp(uu, vv).reshape(Npts**2)
+        Z[i*Npts**2:(i+1)*Npts**2] = zitp(uu, vv).reshape(Npts**2)
+        
+    points = list(zip(X,Y))
+        
+    # interpolation entre ces points  
+    gridxx, gridyy = np.meshgrid(gridx,gridy)
+    
+    Uitp = itp.griddata(points,Z, (gridxx, gridyy), method='nearest')
+    UitpMask = np.ma.masked_where(maskMesh, Uitp)
+    
+    return UitpMask
+
+def computeField(U,nodes,elements,N):
+    """Compute the field on an NxN grid (with a mask on the mesh)"""
+    gridx,gridy,maskMesh = outputGrid(N,nodes)
+    Uinterp = interpOnGrid(U,elements,gridx,gridy,maskMesh)
+    return gridx,gridy,Uinterp
 
 if __name__ == "__main__":
     
