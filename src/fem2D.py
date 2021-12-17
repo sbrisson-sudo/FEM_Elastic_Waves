@@ -144,7 +144,7 @@ def plotMesh(elements, nodes, regions = [], allNodes=False):
     
     ax.legend()
     ax.set_aspect("equal", "box")
-    plt.show()
+    return ax
     
 def plotNodes(e):
     for i,n in enumerate(e.nodes):
@@ -250,6 +250,16 @@ def transform2GL(nodes, elements):
             j = k - i*(N+1)
             n.x = X(xi[j], xi[i])
             n.y = Y(xi[j], xi[i])
+            
+def getCenterNode(nodes):
+    """get the node at the center of the mesh"""
+    
+    coords = np.array([[n.x,n.y] for n in nodes])
+    meanX, meanY = coords[:,0].mean(), coords[:,1].mean()
+    
+    distToCenter = (coords[:,0] - meanX)**2 + (coords[:,1] - meanY)**2  
+    
+    return np.argmin(distToCenter)
             
 #-------------------------
 # Post-Processing
