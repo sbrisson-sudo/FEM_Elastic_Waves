@@ -1,5 +1,5 @@
 L = 100.0;
-dx = 20.0;
+dx = 10.0;
 
 Point(1) = {0.0, 0.0, 0.0, dx};
 Point(2) = {  L, 0.0, 0.0, dx};
@@ -18,7 +18,7 @@ Plane Surface(111) = {21};
 Transfinite Surface {111};
 Recombine Surface {111};
 
-Mesh.ElementOrder = 1;
+Mesh.ElementOrder = 4;
 
 
 Physical Curve("bottom",    31) = {11};
@@ -29,4 +29,15 @@ Physical Curve("left",      34) = {14};
 Physical Surface("main",    35) = {111};
 
 Mesh 2;
-Save "square1.msh";
+Save "square4.msh";//+
+Show "*";
+//+
+Show "*";
+//+
+Show "*";
+//+
+Show "*";
+//+
+Show "*";
+//+
+Show "*";
