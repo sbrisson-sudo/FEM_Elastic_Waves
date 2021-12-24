@@ -162,6 +162,22 @@ def plotMeshLimits(elements, ax):
     for e in elements:
         coords = e.getCoords()
         ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="k", zorder=1)
+        
+def plotDeformedMesh(elements, U, ax, s = 1.0):
+    """plot deformed mesh, U being a 2D displacement field"""
+    for e in elements:
+        coords = e.getCoords()
+
+        nodesVertices = [
+            e.nodes[0], 
+            e.nodes[e.N],
+            e.nodes[(e.N+1)**2-1],
+            e.nodes[(e.N+1)**2-1-e.N],
+        ]
+        u1 = np.array([U[2*n.id] for n in nodesVertices])
+        u2 = np.array([U[2*n.id+1] for n in nodesVertices])
+        ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="k", zorder=1)
+    
 
 
 #-----------------------------
@@ -333,6 +349,25 @@ def computeField(U,nodes,elements,N):
     gridx,gridy,maskMesh = outputGrid(N,nodes)
     Uinterp = interpOnGrid(U,elements,gridx,gridy,maskMesh)
     return gridx,gridy,Uinterp
+
+def exportVTK(U, nodes, filename):
+    """Export the nodes values as legacy vtk format"""
+    
+    out = "# vtk DataFile Version 2.0\nSEM 2D data : nodes values\nASCII\n"
+    
+    # writing nodes positions
+    out += f"DATASET STRUCTURED_GRID\nDIMENSIONS {len(nodes)} {len(nodes)} 1\nPOINTS {len(nodes)} float\n"
+    for n in nodes:
+        out += f"{np.float32(n.x)} {np.float32(n.y)} {np.float32(0.0)}\n"
+        
+    # writing displacement on nodes
+    out += f"POINT_DATA {len(nodes)}\nSCALARS displacement float 1\nLOOKUP_TABLE default\n"
+    for n in nodes:
+        out += f"{np.float32(U[n.id])}\n"
+      
+    with open(filename, "w", encoding="UTF8") as f:
+        f.write(out)
+        
 
 if __name__ == "__main__":
     

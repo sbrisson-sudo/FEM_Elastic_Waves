@@ -41,7 +41,7 @@ Physical Curve("left",24) = {16,17,18};
 Physical Surface("main",211) = {111};
 
 // MESHING
-// Mesh.MeshSizeFactor=0.1; // densify the mesh
+Mesh.MeshSizeFactor=0.5; // densify the mesh
 // Mesh.MshFileVersion = 4;
 Mesh 2;                  // mesh in 2D
 Save "octogon4.msh";      // save file
