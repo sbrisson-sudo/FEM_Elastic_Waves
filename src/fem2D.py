@@ -177,8 +177,6 @@ def plotDeformedMesh(elements, U, ax, s = 1.0):
         u1 = np.array([U[2*n.id] for n in nodesVertices])
         u2 = np.array([U[2*n.id+1] for n in nodesVertices])
         ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="k", zorder=1)
-    
-
 
 #-----------------------------
 # LECTURE MAILLAGES GMSH

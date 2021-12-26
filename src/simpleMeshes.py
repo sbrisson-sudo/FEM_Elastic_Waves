@@ -5,6 +5,11 @@ from fem2D import Node, Element, transform2GL
 def squareMesh(L, dx, N = 1):
     """Build a square mesh, return the elements and nodes list, `L` square size, `dx` elements size, `N=1` elements order"""
     
+    return rectangleMesh(L,L,dx,N)
+
+
+def rectangleMesh(Lx, Ly, dx, N=1):
+    
     if not(N in [1,2,4]): raise(Exception("Only orders 1,2 and 4 implemented."))
 
     gmsh.initialize()
@@ -13,9 +18,9 @@ def squareMesh(L, dx, N = 1):
     # defining geometry
 
     p1 = gmsh.model.geo.addPoint(0, 0, 0, dx)
-    p2 = gmsh.model.geo.addPoint(0, L, 0, dx)
-    p3 = gmsh.model.geo.addPoint(L, L, 0, dx)
-    p4 = gmsh.model.geo.addPoint(L, 0, 0, dx)
+    p2 = gmsh.model.geo.addPoint(Lx, 0, 0, dx)
+    p3 = gmsh.model.geo.addPoint(Lx, Ly, 0, dx)
+    p4 = gmsh.model.geo.addPoint(0, Ly, 0, dx)
 
     l1 = gmsh.model.geo.addLine(p1, p2)
     l2 = gmsh.model.geo.addLine(p2, p3)
@@ -45,7 +50,7 @@ def squareMesh(L, dx, N = 1):
     
     # reading mesh
     
-    regions = list(zip([1,1,1,1], [bot,top,right,left]))
+    regions = list(zip([1,1,1,1], [right,left,bot,top]))
     
     nodeTags, nodeCoords,_ = gmsh.model.mesh.getNodes()
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
@@ -89,4 +94,14 @@ def squareMesh(L, dx, N = 1):
         transform2GL(nodes, elements)
                 
     return elements, nodes
+
+if __name__ == "__main__":
     
+    from fem2D import plotMesh
+    import matplotlib.pyplot as plt
+    
+    elements, nodes = rectangleMesh(200,100,10)
+    bot,right,top,left = [2,3,4,5]
+    
+    plotMesh(elements, nodes, [bot,right,top,left])
+    plt.show()
