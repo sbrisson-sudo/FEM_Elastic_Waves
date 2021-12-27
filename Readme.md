@@ -19,3 +19,7 @@
 - `\meshes` gmsh mesh files `.msh` and geometry files (for building meshes) `.geo`
 - `\quadratureRules` data of GL and GLL quadrature rules
 - `\references` documentation on FEM,SEM an elastic laws
+
+### TODO
+- corriger élastique dynamique en SEM
+- implémenter calcul de la déformation $\varepsilon$ et de la contrainte $\sigma$
