@@ -8,7 +8,7 @@ def squareMesh(L, dx, N = 1):
     return rectangleMesh(L,L,dx,N)
 
 
-def rectangleMesh(Lx, Ly, dx, N=1):
+def rectangleMesh(Lx, Ly, dx, N = 1, **kwargs):
     
     if not(N in [1,2,4]): raise(Exception("Only orders 1,2 and 4 implemented."))
 
@@ -38,6 +38,8 @@ def rectangleMesh(Lx, Ly, dx, N=1):
     gmsh.model.geo.synchronize()
 
     bot,right,top,left = [2,3,4,5] # physical lines tag
+    botTop = kwargs.get("botTop", True)
+    regions = list(zip([1,1,1,1], [bot,top,right,left] if botTop else [right,left,bot,top]))
 
     gmsh.model.addPhysicalGroup(1, [l1], bot)
     gmsh.model.addPhysicalGroup(1, [l2], right)
@@ -49,8 +51,6 @@ def rectangleMesh(Lx, Ly, dx, N=1):
     gmsh.model.mesh.generate(2)
     
     # reading mesh
-    
-    regions = list(zip([1,1,1,1], [right,left,bot,top]))
     
     nodeTags, nodeCoords,_ = gmsh.model.mesh.getNodes()
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
@@ -91,7 +91,7 @@ def rectangleMesh(Lx, Ly, dx, N=1):
     
     N = int(np.sqrt(len(elements[0].nodes))) - 1
     if N > 1:
-        transform2GL(nodes, elements)
+        transform2GL(elements)
                 
     return elements, nodes
 

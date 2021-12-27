@@ -176,7 +176,10 @@ def plotDeformedMesh(elements, U, ax, s = 1.0):
         ]
         u1 = np.array([U[2*n.id] for n in nodesVertices])
         u2 = np.array([U[2*n.id+1] for n in nodesVertices])
-        ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="k", zorder=1)
+        
+        ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="g", zorder=1)
+        ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="gray", zorder=1)
+        ax.annotate(f"exageration = {s}", xy=(0.05, 0.05), xycoords='axes fraction', bbox=dict(facecolor='white', edgecolor='grey'), zorder=5)
 
 #-----------------------------
 # LECTURE MAILLAGES GMSH
@@ -195,6 +198,13 @@ def readGmsh4(file, regions = []):
     
     nodeTags, nodeCoords,_ = gmsh.model.mesh.getNodes()
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
+    
+    nodeCoordsb = [(x,y) for x,y,_ in nodeCoords]
+    
+    print(len(nodeTags))
+    print(len(list(set(nodeTags))))
+    print(len(nodeCoordsb))
+    print(len(list(set(nodeCoordsb))))
     
     nodes = [Node(x, y, 1) for x,y,_ in nodeCoords]
     nodesList = dict(zip(nodeTags, nodes))
@@ -235,17 +245,19 @@ def readGmsh4(file, regions = []):
 
     gmsh.finalize()
     
+    # eliminate doublons in nodesList
+    
     if not(elements): raise(Exception("No quadrangles of degree 1,2 or 4 found."))
     
     # Moving inner points to GL points
     
     N = int(np.sqrt(len(elements[0].nodes))) - 1
     if N > 1:
-        transform2GL(nodes, elements)
+        transform2GL(elements)
                 
     return elements, nodes
 
-def transform2GL(nodes, elements):
+def transform2GL(elements):
     """Move the inner nodes to the Gauss Lobatto points"""
     
     phi = shapeFunctions["P1"]["phi"]
@@ -379,12 +391,20 @@ if __name__ == "__main__":
     #     (1, 24),
     #     ]
     
-    file = "../meshes/square4.msh"
+    # file = "../meshes/square4.msh"
+    # regions = [
+    #     (1, 31),
+    #     (1, 33),
+    #     (1, 32),
+    #     (1, 34),
+    #     ]
+    
+    file = "../meshes/building2.msh"
     regions = [
-        (1, 31),
-        (1, 33),
-        (1, 32),
-        (1, 34),
+        (1, 3),
+        (1, 5),
+        (1, 2),
+        (1, 4),
         ]
     
     elements, nodes = readGmsh4(file, regions)    
@@ -403,3 +423,4 @@ if __name__ == "__main__":
     #---------------------
  
     plotMesh(elements, nodes, [r[1] for r in regions], allNodes=True)
+    plt.show()
