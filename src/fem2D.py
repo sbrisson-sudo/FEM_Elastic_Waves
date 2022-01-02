@@ -179,7 +179,7 @@ def plotDeformedMesh(elements, U, ax, s = 1.0):
         
         ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="g", zorder=1)
         ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="gray", zorder=1)
-        ax.annotate(f"exageration = {s}", xy=(0.05, 0.05), xycoords='axes fraction', bbox=dict(facecolor='white', edgecolor='grey'), zorder=5)
+        ax.annotate(f"exageration = {s:.4g}", xy=(0.05, -0.05), xycoords='axes fraction', bbox=dict(facecolor='white', edgecolor='grey'), zorder=5)
 
 #-----------------------------
 # LECTURE MAILLAGES GMSH
