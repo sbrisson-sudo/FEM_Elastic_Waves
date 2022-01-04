@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
 import numpy as np
 from copy import deepcopy
 from functools import reduce
@@ -180,6 +182,16 @@ def plotDeformedMesh(elements, U, ax, s = 1.0):
         ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="g", zorder=1)
         ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="gray", zorder=1)
         ax.annotate(f"exageration = {s:.4g}", xy=(0.05, -0.05), xycoords='axes fraction', bbox=dict(facecolor='white', edgecolor='grey'), zorder=5)
+        
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    line1 = Line2D([0], [0], label='original mesh', color='gray')
+    line2 = Line2D([0], [0], label='deformed mesh', color='g')
+
+    handles.extend([line1, line2])
+
+    plt.legend(handles=handles)
+    
 
 #-----------------------------
 # LECTURE MAILLAGES GMSH
@@ -200,11 +212,6 @@ def readGmsh4(file, regions = []):
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
     
     nodeCoordsb = [(x,y) for x,y,_ in nodeCoords]
-    
-    print(len(nodeTags))
-    print(len(list(set(nodeTags))))
-    print(len(nodeCoordsb))
-    print(len(list(set(nodeCoordsb))))
     
     nodes = [Node(x, y, 1) for x,y,_ in nodeCoords]
     nodesList = dict(zip(nodeTags, nodes))
@@ -290,27 +297,25 @@ def getCenterNode(nodes):
 #-------------------------
 # Post-Processing
 
-def outputGrid(N,nodes):
+def outputGrid(N,nodes, Ngrid = 200):
     """Return a regular spaced grid and a mask on the mesh"""
     nodesCoord = np.array([[n.x,n.y] for n in nodes])
 
     xmin,xmax = nodesCoord[:,0].min(),nodesCoord[:,0].max()
     ymin,ymax = nodesCoord[:,1].min(),nodesCoord[:,1].max()
 
-    NptsGrid = 200
+    gridx = np.linspace(xmin,xmax,Ngrid)
+    gridy = np.linspace(ymin,ymax,Ngrid)
 
-    gridx = np.linspace(xmin,xmax,NptsGrid)
-    gridy = np.linspace(ymin,ymax,NptsGrid)
-
-    maskMesh = np.full((NptsGrid,NptsGrid), True)
+    maskMesh = np.full((Ngrid,Ngrid), True)
 
     gridxx, gridyy = np.meshgrid(gridx,gridy)
     
     hull = ConvexHull(nodesCoord)
     hull_path = Path(nodesCoord[hull.vertices])
 
-    for i in range(NptsGrid):
-        for j in range(NptsGrid):
+    for i in range(Ngrid):
+        for j in range(Ngrid):
             if hull_path.contains_point((gridxx[i,j],gridyy[i,j])): maskMesh[i,j] = False
     
     return gridx,gridy,maskMesh
@@ -353,6 +358,7 @@ def interpOnGrid(U,elements,gridx,gridy,maskMesh):
     UitpMask = np.ma.masked_where(maskMesh, Uitp)
     
     return UitpMask
+    
 
 def computeField(U,nodes,elements,N):
     """Compute the field on an NxN grid (with a mask on the mesh)"""

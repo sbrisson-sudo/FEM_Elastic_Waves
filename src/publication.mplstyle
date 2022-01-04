@@ -1,0 +1,19 @@
+
+mathtext.fontset : stix
+
+font.family : serif
+font.serif : Ubuntu
+font.monospace: Ubuntu Mono
+font.size : 15
+legend.fontsize : 15
+legend.fancybox : False
+legend.framealpha : 0.5 
+lines.linewidth : 1.25
+grid.linewidth : 0.75
+grid.linestyle : --
+axes.formatter.use_mathtext : True
+axes.linewidth: 2.0
+xtick.major.width: 2.0
+ytick.major.width: 2.0
+axes.spines.right : False
+axes.spines.top : False
