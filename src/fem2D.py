@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import matplotlib.patches as mpatches
 import numpy as np
 from copy import deepcopy
 from functools import reduce
@@ -162,7 +164,34 @@ def plotMeshLimits(elements, ax):
     for e in elements:
         coords = e.getCoords()
         ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="k", zorder=1)
+        
+def plotDeformedMesh(elements, U, ax, s = 1.0):
+    """plot deformed mesh, U being a 2D displacement field"""
+    for e in elements:
+        coords = e.getCoords()
 
+        nodesVertices = [
+            e.nodes[0], 
+            e.nodes[e.N],
+            e.nodes[(e.N+1)**2-1],
+            e.nodes[(e.N+1)**2-1-e.N],
+        ]
+        u1 = np.array([U[2*n.id] for n in nodesVertices])
+        u2 = np.array([U[2*n.id+1] for n in nodesVertices])
+        
+        ax.fill(coords[:,0]+s*u1, coords[:,1]+s*u2, facecolor="none", ec="g", zorder=1)
+        ax.fill(coords[:,0], coords[:,1], facecolor="none", ec="gray", zorder=1)
+        ax.annotate(f"exageration = {s:.4g}", xy=(0.05, -0.05), xycoords='axes fraction', bbox=dict(facecolor='white', edgecolor='grey'), zorder=5)
+        
+    handles, labels = plt.gca().get_legend_handles_labels()
+
+    line1 = Line2D([0], [0], label='original mesh', color='gray')
+    line2 = Line2D([0], [0], label='deformed mesh', color='g')
+
+    handles.extend([line1, line2])
+
+    plt.legend(handles=handles)
+    
 
 #-----------------------------
 # LECTURE MAILLAGES GMSH
@@ -181,6 +210,8 @@ def readGmsh4(file, regions = []):
     
     nodeTags, nodeCoords,_ = gmsh.model.mesh.getNodes()
     nodeCoords = nodeCoords.reshape((len(nodeTags), 3))
+    
+    nodeCoordsb = [(x,y) for x,y,_ in nodeCoords]
     
     nodes = [Node(x, y, 1) for x,y,_ in nodeCoords]
     nodesList = dict(zip(nodeTags, nodes))
@@ -223,17 +254,19 @@ def readGmsh4(file, regions = []):
 
     gmsh.finalize()
     
+    # eliminate doublons in nodesList
+    
     if not(elements): raise(Exception("No quadrangles of degree 1,2 or 4 found."))
     
     # Moving inner points to GL points
     
     N = int(np.sqrt(len(elements[0].nodes))) - 1
     if N > 1:
-        transform2GL(nodes, elements)
+        transform2GL(elements)
                 
     return elements, nodes
 
-def transform2GL(nodes, elements):
+def transform2GL(elements):
     """Move the inner nodes to the Gauss Lobatto points"""
     
     phi = shapeFunctions["P1"]["phi"]
@@ -266,27 +299,25 @@ def getCenterNode(nodes):
 #-------------------------
 # Post-Processing
 
-def outputGrid(N,nodes):
+def outputGrid(N,nodes, Ngrid = 200):
     """Return a regular spaced grid and a mask on the mesh"""
     nodesCoord = np.array([[n.x,n.y] for n in nodes])
 
     xmin,xmax = nodesCoord[:,0].min(),nodesCoord[:,0].max()
     ymin,ymax = nodesCoord[:,1].min(),nodesCoord[:,1].max()
 
-    NptsGrid = 200
+    gridx = np.linspace(xmin,xmax,Ngrid)
+    gridy = np.linspace(ymin,ymax,Ngrid)
 
-    gridx = np.linspace(xmin,xmax,NptsGrid)
-    gridy = np.linspace(ymin,ymax,NptsGrid)
-
-    maskMesh = np.full((NptsGrid,NptsGrid), True)
+    maskMesh = np.full((Ngrid,Ngrid), True)
 
     gridxx, gridyy = np.meshgrid(gridx,gridy)
     
     hull = ConvexHull(nodesCoord)
     hull_path = Path(nodesCoord[hull.vertices])
 
-    for i in range(NptsGrid):
-        for j in range(NptsGrid):
+    for i in range(Ngrid):
+        for j in range(Ngrid):
             if hull_path.contains_point((gridxx[i,j],gridyy[i,j])): maskMesh[i,j] = False
     
     return gridx,gridy,maskMesh
@@ -329,12 +360,32 @@ def interpOnGrid(U,elements,gridx,gridy,maskMesh):
     UitpMask = np.ma.masked_where(maskMesh, Uitp)
     
     return UitpMask
+    
 
 def computeField(U,nodes,elements,N):
     """Compute the field on an NxN grid (with a mask on the mesh)"""
     gridx,gridy,maskMesh = outputGrid(N,nodes)
     Uinterp = interpOnGrid(U,elements,gridx,gridy,maskMesh)
     return gridx,gridy,Uinterp
+
+def exportVTK(U, nodes, filename):
+    """Export the nodes values as legacy vtk format"""
+    
+    out = "# vtk DataFile Version 2.0\nSEM 2D data : nodes values\nASCII\n"
+    
+    # writing nodes positions
+    out += f"DATASET STRUCTURED_GRID\nDIMENSIONS {len(nodes)} {len(nodes)} 1\nPOINTS {len(nodes)} float\n"
+    for n in nodes:
+        out += f"{np.float32(n.x)} {np.float32(n.y)} {np.float32(0.0)}\n"
+        
+    # writing displacement on nodes
+    out += f"POINT_DATA {len(nodes)}\nSCALARS displacement float 1\nLOOKUP_TABLE default\n"
+    for n in nodes:
+        out += f"{np.float32(U[n.id])}\n"
+      
+    with open(filename, "w", encoding="UTF8") as f:
+        f.write(out)
+        
 
 if __name__ == "__main__":
     
@@ -348,12 +399,20 @@ if __name__ == "__main__":
     #     (1, 24),
     #     ]
     
-    file = "../meshes/square4.msh"
+    # file = "../meshes/square4.msh"
+    # regions = [
+    #     (1, 31),
+    #     (1, 33),
+    #     (1, 32),
+    #     (1, 34),
+    #     ]
+    
+    file = "../meshes/building2.msh"
     regions = [
-        (1, 31),
-        (1, 33),
-        (1, 32),
-        (1, 34),
+        (1, 3),
+        (1, 5),
+        (1, 2),
+        (1, 4),
         ]
     
     elements, nodes = readGmsh4(file, regions)    
@@ -372,3 +431,4 @@ if __name__ == "__main__":
     #---------------------
  
     plotMesh(elements, nodes, [r[1] for r in regions], allNodes=True)
+    plt.show()
