@@ -193,6 +193,8 @@ def readGmsh4(file, regions = []):
         
         for n_id in nodes_in_region:
             nodesList[n_id].region = tag_region
+           
+        print(tag_region, len(nodes_in_region))
     
     nodes = list(nodesList.values())
     
